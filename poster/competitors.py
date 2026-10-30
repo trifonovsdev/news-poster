@@ -13,7 +13,9 @@ from poster import config
 
 _WRAP = re.compile(r'<div class="tgme_widget_message_wrap')
 _TEXT = re.compile(r'<div class="tgme_widget_message_text[^>]*>(.*?)</div>', re.S)
-# A story a competitor posted within this window is old news for the channel.
+# A story competitors posted within HOT_HOURS is hot: proof readers care, still
+# worth our own post. Posted earlier (up to COVERED_HOURS) it is old news here.
+HOT_HOURS = 3
 COVERED_HOURS = 24
 _TIME = re.compile(r'<time[^>]*datetime="([^"]+)"')
 
@@ -53,7 +55,7 @@ def digest(ts: float) -> str:
             when = _age(post["time"], ts)
             if when is None or when > COVERED_HOURS:
                 continue
-            if when > config.FRESH_HOURS:  # only to know the story is taken
+            if when > HOT_HOURS:  # only to know the story is taken
                 lines.append(f"[{when:.0f} ч назад, уже было] {post['text'].splitlines()[0][:150]}")
             else:
                 lines.append(f"[{when:.1f} ч назад, медиа: {post['media']}]\n{post['text'][:700]}")
@@ -68,8 +70,8 @@ def _age(iso: str, ts: float) -> float | None:
         return None
 
 
-def covered_by(text: str, ts: float, names) -> str | None:
-    """The competitor that posted this story within COVERED_HOURS, or None.
+def old_news(text: str, ts: float, names) -> str | None:
+    """The competitor that posted this story HOT_HOURS to COVERED_HOURS ago, or None.
 
     Same story = at least three shared names (names() from poster.breaking):
     the model dates a story by the article it read, so a day-old event retold
@@ -83,6 +85,6 @@ def covered_by(text: str, ts: float, names) -> str | None:
             continue
         for post in posts:
             age = _age(post["time"], ts)
-            if age is not None and age <= COVERED_HOURS and len(ours & names(post["text"])) >= 3:
+            if age is not None and HOT_HOURS < age <= COVERED_HOURS and len(ours & names(post["text"])) >= 3:
                 return name
     return None

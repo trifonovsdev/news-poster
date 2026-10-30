@@ -19,7 +19,7 @@ picks one fresh story per run, writes the post in the style of @techmedia,
   model run (`prompts/pick.md`, Read tool only) that looks at them and keeps
   one or two, rejecting watermarks, blur and off-topic shots. No media, no post.
 - Breaking (`poster/breaking.py`): every 5 min code reads the source Telegram
-  channels; a story two of them posted within the hour (two shared names) and
+  channels; a story two of them posted within 3 hours (two shared names) and
   the channel has not covered starts a run before the usual gap ends (20 min
   after the last post at the earliest, 8 such runs a day).
 - Schedule: 09:00–23:00 MSK, up to 10 posts a day, 60–100 min after a post;

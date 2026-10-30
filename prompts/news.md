@@ -29,10 +29,14 @@ the feeds missed (then check its publication time on the page).
   and «first ever X in orbit» stories the reader cannot touch are boring
   unless the whole internet is already laughing or arguing about them.
 - Do not repeat a story the channel already covered (same event, even from
-  another site). Never take a story a competitor already posted in the last
-  24 hours (fresh posts and «уже было» lines in the task): for the reader it
-  is old news, and code refuses it anyway. A new article about yesterday's
-  event is not a fresh story.
+  another site).
+- Competitor posts in the task are the best signal of what readers care
+  about right now. Their posts of the last 3 hours (shown in full) are hot:
+  a story there that the channel has not covered is a top candidate, often
+  the best one, especially when two channels have it. Write your own post
+  from the primary source, never retell theirs. Their older posts («уже
+  было») are old news: code refuses those stories, and a new article about
+  yesterday's event is not a fresh story.
 - Skip: politics and war, crime and tragedies, ads and paid promos, rumours
   with no named source, press-release filler, «top 10» lists, stories you
   could only see in one obscure source.
@@ -104,7 +108,7 @@ likes:
   нюанс»). Conversational words are welcome: тачка, железяки, нейронка,
   юзеры, шабашка. <b>…</b> for at most one key phrase; an emoji inside the
   text only when it adds something (💳 🤷‍♂️). No hashtags.
-- `kicker`: required, this is the soul of the post. One short line, the
+- `kicker`: required, this is the soul of the post. Plain text, no tags. One short line, the
   channel's own reaction, as a smart friend would say it: irony, a pun, a
   pain everyone shares, a joke about the obvious winner or loser.
   «Теперь безработных будет двое», «Поиграли и хватит», «Планы на

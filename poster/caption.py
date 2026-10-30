@@ -59,13 +59,12 @@ def visible_length(markup: str) -> int:
 
 def render(story: dict) -> str:
     emoji = story.get("emoji", "").strip()
-    # The headline is bold and the kicker italic as a whole; nested tags of the same
-    # kind inside them are dropped.
+    # The headline is bold as a whole; tags inside it are dropped.
     headline = html.escape(re.sub(r"<[^>]+>", "", story["headline"]).strip(), quote=False)
     parts = [f"{emoji} <b>{headline}</b>".strip()]
     parts += [clean(p) for p in story["paragraphs"] if p.strip()]
     if story.get("kicker", "").strip():
-        parts.append(f"<i>{re.sub(r'</?i>', '', clean(story['kicker']))}</i>")
+        parts.append(clean(story["kicker"]))
     parts.append(config.FOOTER)
     return "\n\n".join(parts)
 

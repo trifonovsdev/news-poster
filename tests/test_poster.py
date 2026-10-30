@@ -36,7 +36,7 @@ class CaptionTest(unittest.TestCase):
         self.assertIn("<b>главным</b>", text)
         self.assertIn("&lt;", "".join(caption.clean("a < b")))
         self.assertNotIn("<script>", text)
-        self.assertIn('<i>Пробуем <a href="https://x.com/t">тут</a></i>', text)
+        self.assertIn('\n\nПробуем <a href="https://x.com/t">тут</a>\n\n', text)
         self.assertTrue(text.endswith(config.FOOTER))
 
     def test_unsafe_links_and_unclosed_tags(self):
@@ -261,7 +261,7 @@ class BreakingTest(unittest.TestCase):
             "a": [self.post(5, "Claude запретили копировать игры."),
                   self.post(6, "Kimi можно оплатить картами Мир.")],
             "b": [self.post(9, "Kimi обогнала Claude в тестах."),
-                  self.post(120, "Kimi принимает карты Мир.")],
+                  self.post(240, "Kimi принимает карты Мир.")],
         }
         self.assertIsNone(breaking.hot(posts, self.TS, set(), set()))
 
@@ -302,8 +302,8 @@ class FeedsTest(unittest.TestCase):
         self.assertEqual([i["url"] for i in items], [f"u{n}" for n in range(1, feeds.PER_SOURCE + 1)])
 
 
-class CoveredByTest(unittest.TestCase):
-    def test_story_a_competitor_posted_today_is_taken(self):
+class OldNewsTest(unittest.TestCase):
+    def test_story_competitors_posted_hours_ago_is_old(self):
         ts = 1_800_000_000.0
         today = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts - 20 * 3600))
         old = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts - 30 * 3600))
@@ -313,10 +313,12 @@ class CoveredByTest(unittest.TestCase):
         }
         with mock.patch.object(competitors, "fetch", lambda name, limit: posts.get(name, [])):
             ours = "Поддельный Claude Code в магазине Cursor ставил SSH-бэкдор"
-            self.assertEqual(competitors.covered_by(ours, ts, breaking.names), "lolzteam")
+            self.assertEqual(competitors.old_news(ours, ts, breaking.names), "lolzteam")
+            # posted within HOT_HOURS it is hot, not old
+            self.assertIsNone(competitors.old_news(ours, ts + 3600 - 19 * 3600, breaking.names))
             # older than a day, and one shared name, are not the same story
-            self.assertIsNone(competitors.covered_by("Apple показала iPhone и Vision Pro", ts, breaking.names))
-            self.assertIsNone(competitors.covered_by("Claude научился рисовать", ts, breaking.names))
+            self.assertIsNone(competitors.old_news("Apple показала iPhone и Vision Pro", ts, breaking.names))
+            self.assertIsNone(competitors.old_news("Claude научился рисовать", ts, breaking.names))
 
 
 if __name__ == "__main__":

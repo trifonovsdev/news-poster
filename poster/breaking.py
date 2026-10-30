@@ -1,7 +1,7 @@
 """Spots a story breaking in Telegram, so the poster need not wait out its usual gap.
 
 No model here: every few minutes code reads the source channels and calls a story
-hot when two of them posted about it within the last hour (sharing two or more
+hot when two of them posted about it within the last few hours (sharing two or more
 names: capitalised words inside a sentence, or Latin brands) and the channel
 has not covered it lately. A hot story starts a normal model run, which
 still decides whether to post it.
@@ -11,7 +11,7 @@ import re
 
 from poster import competitors, config
 
-WINDOW_HOURS = 1.0
+WINDOW_HOURS = competitors.HOT_HOURS
 # Latin words that show up in every tech post and say nothing about the story.
 COMMON = {
     "the", "and", "for", "with", "you", "new", "app", "pro", "max", "plus", "ultra", "mini",
@@ -29,7 +29,7 @@ def names(text: str) -> set[str]:
 
 
 def hot(posts: dict[str, list[dict]], ts: float, covered: set[str], used: set[str]) -> tuple[str, list[str]] | None:
-    """A story two channels posted within the hour, as (key, posts), or None.
+    """A story two channels posted within WINDOW_HOURS, as (key, posts), or None.
 
     Two posts are one story when they share at least two names: one shared name
     ("Claude", "Apple") links unrelated news. covered: names in the channel's own
