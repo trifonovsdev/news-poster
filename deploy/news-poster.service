@@ -1,0 +1,18 @@
+[Unit]
+Description=news-poster (Claude Sonnet news editor for a Telegram channel)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Fix these: the project folder, and a user whose HOME has Claude Code logged in.
+WorkingDirectory=/opt/news-poster
+User=root
+ExecStart=/usr/bin/python3 -m poster.main
+Restart=always
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+# claude, uv and node must be on this PATH.
+Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=multi-user.target
