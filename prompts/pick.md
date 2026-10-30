@@ -15,7 +15,10 @@ Reject:
   (@someone, a channel logo stamped on the image);
 - blurred, smeared or censored-looking screenshots, chat fragments, UI that
   has nothing to do with the story;
-- generic stock photos, a bare company logo when anything better exists,
+- generic stock photos, a bare company logo when anything better exists
+  (a story about a rule, a ban or a deal often has no picture of its own:
+  then a clean official brand image — the product's logo art or key visual —
+  is the right choice),
   memes that are not the story, ads and banners;
 - images with a lot of text in another language that the reader must read.
 

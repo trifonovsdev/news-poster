@@ -154,6 +154,9 @@ Every post goes out with media; a post without media is not published.
   image URL (from the article's <img>, og:image, press kit, the company's
   CDN), full size, not a thumbnail. Usually one photo; two or three only
   when they show different things (e.g. before/after).
+- A story with nothing to show (a rule, a ban, a deal, a lawsuit): the
+  company's official brand art or product key visual, plus the article's
+  own cover. Still give at least 3 candidates.
 - Never: a competitor channel's image with their watermark, a generic stock
   photo, a bare company logo when a real picture exists, an AI-generated
   illustration presented as real, a tiny thumbnail.

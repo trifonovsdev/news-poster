@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 """
 
 
+NO_MEDIA = "no usable media"
+
+
 class Store:
     def __init__(self, path):
         self.db = sqlite3.connect(path)
@@ -40,8 +43,13 @@ class Store:
         self.db.commit()
 
     def seen(self, urls) -> bool:
+        """True if a story from these urls went out or was turned down for its content.
+        A story dropped only for lack of media may come back with better pictures."""
         return any(
-            self.db.execute("SELECT 1 FROM stories WHERE url=?", (u,)).fetchone() for u in urls
+            self.db.execute(
+                "SELECT 1 FROM stories WHERE url=? AND coalesce(reason, '') != ?", (u, NO_MEDIA)
+            ).fetchone()
+            for u in urls
         )
 
     def posted_since(self, ts: float) -> int:

@@ -321,5 +321,14 @@ class OldNewsTest(unittest.TestCase):
             self.assertIsNone(competitors.old_news("Claude научился рисовать", ts, breaking.names))
 
 
+class StoreTest(unittest.TestCase):
+    def test_story_dropped_for_media_may_come_back(self):
+        store = Store(":memory:")
+        store.add("rejected", "u1", reason="no usable media")
+        store.add("rejected", "u2", reason="stale")
+        self.assertFalse(store.seen(["u1"]))
+        self.assertTrue(store.seen(["u2"]))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -16,7 +16,9 @@ from datetime import datetime
 from pathlib import Path
 
 from poster import breaking, caption, channel, competitors, config, feeds, llm, media
-from poster.store import Store
+from poster.store import NO_MEDIA, Store
+
+SEEN = "source already used"
 
 log = logging.getLogger("news-poster")
 SEND_ATTEMPTS = 3
@@ -84,7 +86,7 @@ def check(story: dict, store: Store, ts: float) -> str | None:
     if not story["source_urls"]:
         return "no source"
     if store.seen(story["source_urls"]):
-        return "source already used"
+        return SEEN
     published = parse_time(story["published_at"])
     if published is None:
         return f"bad published_at {story['published_at']!r}"
@@ -149,7 +151,7 @@ async def make_post(store: Store, *, dry: bool, hint: str = "", lead: str = "") 
         if files and files[0].suffix != ".mp4":
             files = await pick_photos(text, files)
         if not files:
-            reason = "no usable media"
+            reason = NO_MEDIA
     record = dict(
         topic=story["topic"],
         headline=story["headline"],
@@ -158,7 +160,7 @@ async def make_post(store: Store, *, dry: bool, hint: str = "", lead: str = "") 
     )
     if reason:
         log.info("rejected %s: %s", story["source_urls"][:1], reason)
-        if not dry and story["source_urls"]:
+        if not dry and story["source_urls"] and reason != SEEN:  # already on record
             store.add("rejected", story["source_urls"][0], reason=reason, **record)
         return False
     if dry:
