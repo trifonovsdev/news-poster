@@ -23,7 +23,11 @@ the feeds missed (then check its publication time on the page).
   stories (Russian services, blocks, prices, releases in RU) are welcome.
 - Pick what a 16–30 year old who lives online would forward to a friend:
   a release they can try, a price or rule change that touches them, a scandal,
-  a record, an absurd but true fact, a big leak, a trailer.
+  a record, an absurd but true fact, a big leak, a trailer. Ask: would they
+  react «охренеть», «хочу» or «ну всё, приплыли»? If the honest answer is
+  «ну ок», skip it. Research projects, lab prototypes, corporate experiments
+  and «first ever X in orbit» stories the reader cannot touch are boring
+  unless the whole internet is already laughing or arguing about them.
 - Do not repeat a story the channel already covered (same event, even from
   another site). Never take a story a competitor already posted in the last
   24 hours (fresh posts and «уже было» lines in the task): for the reader it
