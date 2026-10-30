@@ -43,18 +43,26 @@ CHANNEL_SOCKET = Path(os.environ.get("CHANNEL_SOCKET", "/run/news-poster/channel
 
 MODEL = os.environ.get("MODEL", "claude-sonnet-5-5")
 NEWS_TIMEOUT_SECONDS = 20 * 60
+PICK_TIMEOUT_SECONDS = 5 * 60
 
 ACTIVE_HOURS = (9, 23)  # MSK, [start, end)
 POSTS_PER_DAY = 10
 GAP_MINUTES = (60, 100)  # random pause after a post
 RETRY_MINUTES = (20, 40, 60)  # after 1, 2, 3+ runs in a row that posted nothing
+# A story two or more source channels picked up within the hour starts a run before
+# the gap ends (poster/breaking.py); the check itself costs no model run.
+BREAKING_CHECK_MINUTES = 5
+BREAKING_MIN_GAP_MINUTES = 20
+BREAKING_RUNS_PER_DAY = 8
 FRESH_HOURS = 6  # older stories are refused whatever the model says
 RECENT_DAYS = 3  # own posts the model sees, so it does not repeat a story
 
-# Competitors whose public web preview (t.me/s/<name>) the model reads for style and
-# for what is already covered.
-COMPETITORS = ("lolzteam", "technomotel")
-COMPETITOR_POSTS = 10
+# Telegram channels read from their public web preview (t.me/s/<name>): the
+# competitors set the style; all of them show what is breaking right now, since a
+# lot of news (payments, bans, outages) surfaces in Telegram before any site.
+COMPETITORS = ("techmedia", "lolzteam", "technomotel")
+SOURCE_CHANNELS = (*COMPETITORS, "bugnotfeature", "exploitex", "data_secrets", "ai_newz")
+COMPETITOR_POSTS = 10  # latest posts per channel, within FRESH_HOURS
 
 CAPTION_LIMIT = 1024  # Telegram's caption limit for an account without Premium
 PHOTO_MIN_SIZE = (640, 360)  # a typical news picture is 800x450

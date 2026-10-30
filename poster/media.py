@@ -149,27 +149,24 @@ def page_image(url: str) -> str | None:
 
 
 def collect(candidates: list[dict], sources: list[str], stamp: str, log) -> list[Path]:
-    """One video, or up to three photos, in the model's order; the source's own image last."""
+    """The first video that downloads, alone; otherwise every photo that passes,
+    plus the source pages' own images, for the model to look at and choose."""
     files: list[Path] = []
     for n, item in enumerate(candidates):
         dest = config.MEDIA / f"{stamp}-{n}"
         try:
             if item["kind"] == "video":
-                if files:
-                    continue  # a video goes alone: albums mute it
-                return [video(item["url"], dest)]
+                if not files:  # a video goes alone, and only when preferred over photos
+                    return [video(item["url"], dest)]
+                continue
             files.append(photo(item["url"], dest))
         except Exception as e:
             log.info("media skipped %s: %s", item.get("url", "")[:120], e)
-        if len(files) == 3:
-            break
-    if not files:
-        for url in sources[:2]:
-            image = page_image(url)
-            if not image:
-                continue
+    for n, url in enumerate(sources[:2]):
+        image = page_image(url)
+        if image and image not in {c["url"] for c in candidates}:
             try:
-                return [photo(image, config.MEDIA / f"{stamp}-og")]
+                files.append(photo(image, config.MEDIA / f"{stamp}-og{n}"))
             except Exception as e:
                 log.info("og image skipped %s: %s", image[:120], e)
     return files

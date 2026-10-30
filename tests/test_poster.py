@@ -8,7 +8,7 @@ from unittest import mock
 
 from PIL import Image
 
-from poster import caption, channel, competitors, config, feeds, main, media
+from poster import breaking, caption, channel, competitors, config, feeds, main, media
 from poster.store import Store
 
 
@@ -235,6 +235,48 @@ class BotTest(unittest.TestCase):
                     channel._bot_send("c", [photo])
                 self.assertGreater(asyncio.run(channel.status()), 100)
         channel._bot_held_until = 0.0
+
+
+class BreakingTest(unittest.TestCase):
+    TS = 1_800_000_000.0
+
+    def post(self, minutes_ago, text):
+        when = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(self.TS - minutes_ago * 60))
+        return {"time": when, "media": "photo", "text": text}
+
+    def test_two_channels_with_two_shared_names_are_hot(self):
+        posts = {
+            "a": [self.post(5, "Китайскую Kimi можно оплатить картами Мир.")],
+            "b": [self.post(10, "Разработчики Kimi добавили оплату картой «Мир».")],
+            "c": [self.post(3, "Claude запретили копировать игры.")],
+        }
+        key, texts = breaking.hot(posts, self.TS, set(), set())
+        self.assertEqual(key, "kimi+мир")
+        self.assertEqual(len(texts), 2)
+        self.assertIsNone(breaking.hot(posts, self.TS, {"kimi", "мир"}, set()))
+        self.assertIsNone(breaking.hot(posts, self.TS, set(), {"kimi+мир"}))
+
+    def test_one_shared_name_old_posts_and_one_channel_are_not(self):
+        posts = {
+            "a": [self.post(5, "Claude запретили копировать игры."),
+                  self.post(6, "Kimi можно оплатить картами Мир.")],
+            "b": [self.post(9, "Kimi обогнала Claude в тестах."),
+                  self.post(120, "Kimi принимает карты Мир.")],
+        }
+        self.assertIsNone(breaking.hot(posts, self.TS, set(), set()))
+
+    def test_sentence_starts_are_not_names(self):
+        self.assertEqual(breaking.names("Теперь можно платить. Новая функция у Kimi и «Мир»"), {"kimi", "мир"})
+
+
+class PickTest(unittest.TestCase):
+    def test_keeps_only_known_files_and_falls_back_on_error(self):
+        files = [Path("/m/a.jpg"), Path("/m/b.jpg")]
+        answer = {"chosen": ["b.jpg", "../etc/passwd"], "reason": "r"}
+        with mock.patch.object(main.llm, "run", mock.AsyncMock(return_value=answer)):
+            self.assertEqual(asyncio.run(main.pick_photos("t", files)), [files[1]])
+        with mock.patch.object(main.llm, "run", mock.AsyncMock(side_effect=main.llm.LLMError("x"))):
+            self.assertEqual(asyncio.run(main.pick_photos("t", files)), files[:1])
 
 
 class FeedsTest(unittest.TestCase):

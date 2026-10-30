@@ -7,6 +7,7 @@ account nothing against Telegram's limits.
 import html
 import re
 import urllib.request
+from datetime import datetime
 
 from poster import config
 
@@ -35,16 +36,28 @@ def fetch(name: str, limit: int = config.COMPETITOR_POSTS) -> list[dict]:
         return parse(response.read().decode("utf-8", "replace"), limit)
 
 
-def digest() -> str:
+def digest(ts: float) -> str:
+    """Each channel's latest posts within FRESH_HOURS, with their age."""
     parts = []
-    for name in config.COMPETITORS:
+    for name in config.SOURCE_CHANNELS:
+        role = "конкурент, ориентир по стилю" if name in config.COMPETITORS else "источник"
         try:
             posts = fetch(name)
-        except Exception as e:  # a competitor's page being down must not stop a post
-            parts.append(f"## @{name}: не загрузился ({e})")
+        except Exception as e:  # a channel's page being down must not stop a post
+            parts.append(f"## @{name} ({role}): не загрузился ({e})")
             continue
-        lines = [f"## @{name}"]
+        lines = [f"## @{name} ({role})"]
         for post in posts:
-            lines.append(f"[{post['time']}, медиа: {post['media']}]\n{post['text'][:700]}")
-        parts.append("\n\n".join(lines))
+            when = _age(post["time"], ts)
+            if when is None or when > config.FRESH_HOURS:
+                continue
+            lines.append(f"[{when:.1f} ч назад, медиа: {post['media']}]\n{post['text'][:700]}")
+        parts.append("\n\n".join(lines) if len(lines) > 1 else f"{lines[0]}: свежих постов нет")
     return "\n\n".join(parts)
+
+
+def _age(iso: str, ts: float) -> float | None:
+    try:
+        return (ts - datetime.fromisoformat(iso).timestamp()) / 3600
+    except ValueError:
+        return None

@@ -2,8 +2,8 @@
 
 An autonomous news editor for a Russian-language Telegram channel about tech,
 AI, games, gadgets and internet culture. Claude Sonnet (headless Claude Code)
-picks one fresh story per run, writes the post in the style of @lolzteam and
-@technomotel, and picks photos or a video. Code checks the result and posts it.
+picks one fresh story per run, writes the post in the style of @techmedia,
+@lolzteam and @technomotel, and picks photos or a video. Code checks the result and posts it.
 
 - Each run, the model gets fresh headlines (≤ 6 h, from ~35 RSS feeds in
   `poster/feeds.py`), the competitors' latest posts (public `t.me/s/`
@@ -14,8 +14,14 @@ picks one fresh story per run, writes the post in the style of @lolzteam and
   present. The caption is built by `poster/caption.py`; only `<b> <i> <u> <s>
   <code> <a href=http…>` survive.
 - Media (`poster/media.py`): one video (yt-dlp, ≤ 5 min, ≤ 50 MB, H.264 or
-  converted) or up to three photos (at least 640×360, saved as JPEG), else the
-  source page's og:image. No media, no post.
+  converted), or photos: every candidate that downloads (at least 640×360,
+  saved as JPEG) plus the source pages' og:image goes to a second, short
+  model run (`prompts/pick.md`, Read tool only) that looks at them and keeps
+  one or two, rejecting watermarks, blur and off-topic shots. No media, no post.
+- Breaking (`poster/breaking.py`): every 5 min code reads the source Telegram
+  channels; a story two of them posted within the hour (two shared names) and
+  the channel has not covered starts a run before the usual gap ends (20 min
+  after the last post at the earliest, 8 such runs a day).
 - Schedule: 09:00–23:00 MSK, up to 10 posts a day, 60–100 min after a post;
   after runs that posted nothing 20, 40, then 60 min. Settings:
   `poster/config.py`; the channel itself: `.env`.

@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+from pathlib import Path
 
 from poster import config
 
@@ -11,8 +12,16 @@ class LLMError(RuntimeError):
     pass
 
 
-async def run(prompt_name: str, task: str, schema: dict, *, timeout: int) -> dict:
-    """One model run with web search and fetch only; returns the structured answer."""
+async def run(
+    prompt_name: str,
+    task: str,
+    schema: dict,
+    *,
+    timeout: int,
+    tools: tuple[str, ...] = ("WebSearch", "WebFetch"),
+    cwd: Path = config.RUN_DIR,
+) -> dict:
+    """One model run with only `tools`; returns the structured answer."""
     config.RUN_DIR.mkdir(parents=True, exist_ok=True)
     args = [
         "claude",
@@ -33,17 +42,16 @@ async def run(prompt_name: str, task: str, schema: dict, *, timeout: int) -> dic
         "--json-schema",
         json.dumps(schema),
         "--tools",
-        "WebSearch,WebFetch",
+        ",".join(tools),
         "--allowedTools",
-        "WebSearch",
-        "WebFetch",
+        *tools,
         "--strict-mcp-config",
         "--",
         task,
     ]
     proc = await asyncio.create_subprocess_exec(
         *args,
-        cwd=config.RUN_DIR,
+        cwd=cwd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         env=dict(os.environ),

@@ -49,6 +49,10 @@ class Store:
             "SELECT count(*) FROM stories WHERE status='posted' AND ts>=?", (ts,)
         ).fetchone()[0]
 
+    def last_posted_at(self) -> float:
+        row = self.db.execute("SELECT max(ts) FROM stories WHERE status='posted'").fetchone()
+        return row[0] or 0.0
+
     def recent(self, since: float):
         return self.db.execute(
             "SELECT ts, status, url, topic, headline, reason FROM stories WHERE ts>=? ORDER BY ts",
