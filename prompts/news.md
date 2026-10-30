@@ -55,45 +55,64 @@ reason. An empty run is better than a weak or stale post.
 
 ## 2. Write the post (Russian)
 
-Short, confident, like a friend dropping news in a chat. The owner's example
-of a good post (@techmedia):
+Write like @lolzteam: a headline with the news, then one or two short
+paragraphs of facts. Nothing else. Examples of the style the owner wants:
+
+> 💻 Pornhub решил конкурировать с YouTube и Twitch
+>
+> Площадка позвала блогеров заливать подкасты, кулинарные видео, летсплеи и
+> прочий контент без пометки 18+.
+>
+> Главными козырями в компании называют отсутствие цензуры и аудиторию в
+> 130 млн человек в день. У Twitch при этом всего около 35 млн ежедневных
+> юзеров, а у YouTube примерно 122 млн.
+
+> 🚫 Claude запретили копировать игры
+>
+> Anthropic ввела ограничения на работу с лицензированным игровым кодом.
+> Теперь нейросеть не должна помогать с его копированием.
+>
+> Под угрозой могут оказаться моды, порты игр и бесплатные клоны популярных
+> проектов.
 
 > ❗️ Китайскую нейросеть Kimi **теперь можно оплачивать из России** — подписку
 > на ИИ можно оформить российской банковской картой 💳
 >
 > Для этого достаточно зайти на **официальный сайт Kimi** без VPN, выбрать
 > нужный тариф и ввести данные карты.
->
-> Claude уничтожен в пух и прах.
 
-- `emoji`: one emoji that fits (❗️ big news, 🤖 AI, 🎮 games, 📱 phones,
-  💻 PC, 💳 money and payments, 🔥 release, 😱 scandal, 🤯 wild…).
-- `headline`: the news in one line, up to ~110 characters: who did what and
-  why it matters to the reader. It may run on after a dash («… — подписку
-  можно оформить российской картой»). One word in CAPS is allowed when it is
-  the hook. No clickbait the body does not pay off, no questions, no period.
-- `paragraphs`: 1–2 short paragraphs, 1–2 sentences each: what the reader
-  can do or what changes for them (how to try it, the price, the date), or
-  the one detail worth retelling. Lists of features: one paragraph with
-  lines that start with «· ». Inline markup: <b>…</b> for 1–2 key phrases,
-  <a href="https://…">word</a> only for a «try it here» link. No hashtags.
-- `kicker`: one short punchline in the channel's voice — a dry joke or a
-  verdict («Claude уничтожен в пух и прах», «Дядя Хуанг разлюбил геймеров»).
-  Empty string if nothing good comes to mind.
-- Total length: 200–550 characters without markup.
-- Say the news, not how you found it. Never write where it came from or
-  who reported it («на Хабре», «пользователь показал», «по скриншотам»,
-  «как пишет The Verge», «сообщает источник»), and no hedging chains about
-  what is confirmed. Once you have verified it is real, state it plainly. If
-  a key fact is genuinely uncertain, one word («похоже», «по слухам») is
-  enough — and if the whole story is that shaky, pick another one.
-- No exchange rates, card numbers, receipts and other clutter that the
-  reader does not need to act on the news.
-- Plain, lively Russian, «ты»-tone is fine, slang in moderation (нейронка,
-  видяха, дропнули). No bureaucratic phrases («сообщается, что», «стоит
-  отметить», «в рамках»), no rhetorical questions. Brand and product names
-  stay in Latin script.
-- Never invent anything. Unknowns are left out, not guessed.
+- `emoji`: one emoji that fits (❗️ big news, 🤖 🧠 AI, 🎮 games, 📱 phones,
+  💻 PC, 💰 money, 🔥 release, 😱 scandal, 🤯 wild, 🚫 bans…).
+- `headline`: the news in one plain line, up to ~100 characters: who did
+  what. One word in CAPS is allowed when it is the hook. No clickbait, no
+  questions, no period.
+- `paragraphs`: 1–2 paragraphs, 1–2 sentences each. The first says what
+  exactly happened. The second, if any, gives the one fact that makes the
+  story interesting: a number, a comparison, a consequence, the release date,
+  where to try it («Протестить можно здесь» with <a href="https://…">здесь</a>).
+  <b>…</b> for at most one key phrase. No hashtags.
+- `kicker`: usually an empty string. Only when a short dry joke is genuinely
+  funny («Claude уничтожен в пух и прах»); never a moral or a summary.
+- Total length: 200–450 characters without markup.
+
+These give a post away as written by a neural network. Never write them:
+- advice and instructions to the reader: «если ставил…, проверь…», «смени
+  пароли», «будь осторожен», «стоит обновиться». The only exception is a
+  real emergency where the steps are the news itself (a hacked app everyone
+  must delete): then a short list of steps, each line starting with «➖ ».
+- disclaimers and clarifications: «X к этому не причастна», «официального
+  подтверждения пока нет», «пока неясно», «важно отметить»;
+- summaries and morals at the end: «это показывает…», «рынок меняется»,
+  «стал чуточку опаснее»;
+- where the news came from: «на Хабре», «пользователь показал», «по
+  скриншотам», «как пишет The Verge», «сообщает источник». State verified
+  facts plainly; if the whole story needs hedging, pick another one;
+- bureaucratic words («сообщается, что», «в рамках», «данный»), rhetorical
+  questions, exchange rates, receipts and other clutter.
+
+Plain lively Russian, slang in moderation (нейронка, видяха, юзеры). Brand
+and product names stay in Latin script. Never invent anything: unknowns are
+left out, not guessed.
 
 ## 3. Pick the media
 
