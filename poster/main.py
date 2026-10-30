@@ -133,6 +133,12 @@ async def make_post(store: Store, *, dry: bool, hint: str = "", lead: str = "") 
         return False
     reason = check(story, store, ts)
     text = caption.fit(story, config.CAPTION_LIMIT)
+    if not reason and not hint:  # the owner's --topic overrides this
+        rival = await asyncio.to_thread(
+            competitors.covered_by, " ".join([story["headline"], *story["paragraphs"]]), ts, breaking.names
+        )
+        if rival:
+            reason = f"already posted by @{rival}"
     if not reason and caption.visible_length(text) > config.CAPTION_LIMIT:
         reason = f"caption too long ({caption.visible_length(text)})"
     files = []

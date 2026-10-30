@@ -302,5 +302,22 @@ class FeedsTest(unittest.TestCase):
         self.assertEqual([i["url"] for i in items], [f"u{n}" for n in range(1, feeds.PER_SOURCE + 1)])
 
 
+class CoveredByTest(unittest.TestCase):
+    def test_story_a_competitor_posted_today_is_taken(self):
+        ts = 1_800_000_000.0
+        today = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts - 20 * 3600))
+        old = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts - 30 * 3600))
+        posts = {
+            "lolzteam": [{"time": today, "text": "В Claude Code для Cursor нашли бэкдор через SSH"}],
+            "techmedia": [{"time": old, "text": "Apple выпустила iPhone с чипом и Vision Pro"}],
+        }
+        with mock.patch.object(competitors, "fetch", lambda name, limit: posts.get(name, [])):
+            ours = "Поддельный Claude Code в магазине Cursor ставил SSH-бэкдор"
+            self.assertEqual(competitors.covered_by(ours, ts, breaking.names), "lolzteam")
+            # older than a day, and one shared name, are not the same story
+            self.assertIsNone(competitors.covered_by("Apple показала iPhone и Vision Pro", ts, breaking.names))
+            self.assertIsNone(competitors.covered_by("Claude научился рисовать", ts, breaking.names))
+
+
 if __name__ == "__main__":
     unittest.main()

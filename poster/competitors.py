@@ -13,6 +13,8 @@ from poster import config
 
 _WRAP = re.compile(r'<div class="tgme_widget_message_wrap')
 _TEXT = re.compile(r'<div class="tgme_widget_message_text[^>]*>(.*?)</div>', re.S)
+# A story a competitor posted within this window is old news for the channel.
+COVERED_HOURS = 24
 _TIME = re.compile(r'<time[^>]*datetime="([^"]+)"')
 
 
@@ -37,7 +39,7 @@ def fetch(name: str, limit: int = config.COMPETITOR_POSTS) -> list[dict]:
 
 
 def digest(ts: float) -> str:
-    """Each channel's latest posts within FRESH_HOURS, with their age."""
+    """Each channel's posts of the last day: fresh ones in full, older ones as a headline."""
     parts = []
     for name in config.SOURCE_CHANNELS:
         role = "конкурент, ориентир по стилю" if name in config.COMPETITORS else "источник"
@@ -49,9 +51,12 @@ def digest(ts: float) -> str:
         lines = [f"## @{name} ({role})"]
         for post in posts:
             when = _age(post["time"], ts)
-            if when is None or when > config.FRESH_HOURS:
+            if when is None or when > COVERED_HOURS:
                 continue
-            lines.append(f"[{when:.1f} ч назад, медиа: {post['media']}]\n{post['text'][:700]}")
+            if when > config.FRESH_HOURS:  # only to know the story is taken
+                lines.append(f"[{when:.0f} ч назад, уже было] {post['text'].splitlines()[0][:150]}")
+            else:
+                lines.append(f"[{when:.1f} ч назад, медиа: {post['media']}]\n{post['text'][:700]}")
         parts.append("\n\n".join(lines) if len(lines) > 1 else f"{lines[0]}: свежих постов нет")
     return "\n\n".join(parts)
 
@@ -61,3 +66,23 @@ def _age(iso: str, ts: float) -> float | None:
         return (ts - datetime.fromisoformat(iso).timestamp()) / 3600
     except ValueError:
         return None
+
+
+def covered_by(text: str, ts: float, names) -> str | None:
+    """The competitor that posted this story within COVERED_HOURS, or None.
+
+    Same story = at least three shared names (names() from poster.breaking):
+    the model dates a story by the article it read, so a day-old event retold
+    by a new site looks fresh to the time check alone.
+    """
+    ours = names(text)
+    for name in config.COMPETITORS:
+        try:
+            posts = fetch(name, 30)
+        except Exception:
+            continue
+        for post in posts:
+            age = _age(post["time"], ts)
+            if age is not None and age <= COVERED_HOURS and len(ours & names(post["text"])) >= 3:
+                return name
+    return None
