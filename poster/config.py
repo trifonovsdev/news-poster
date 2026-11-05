@@ -62,12 +62,14 @@ BREAKING_CHECK_MINUTES = 5
 BREAKING_MIN_GAP_MINUTES = 20
 BREAKING_RUNS_PER_DAY = 8
 FRESH_HOURS = 6  # older stories are refused whatever the model says
+FIND_EVERY = 3  # after this many news posts in a row the next one is a find
+FIND_FRESH_DAYS = 7  # «находки» (tools, repos, free games): not news, but must be new
 RECENT_DAYS = 3  # own posts the model sees, so it does not repeat a story
 
 # Telegram channels read from their public web preview (t.me/s/<name>): the
 # competitors set the style; all of them show what is breaking right now, since a
 # lot of news (payments, bans, outages) surfaces in Telegram before any site.
-COMPETITORS = ("techmedia", "lolzteam", "technomotel")
+COMPETITORS = ("techmedia", "lolzteam", "technomotel", "ulta_games")
 SOURCE_CHANNELS = (*COMPETITORS, "bugnotfeature", "exploitex", "data_secrets", "ai_newz")
 COMPETITOR_POSTS = 10  # latest posts per channel, within FRESH_HOURS
 

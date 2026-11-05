@@ -8,7 +8,7 @@ from unittest import mock
 
 from PIL import Image
 
-from poster import breaking, caption, channel, competitors, config, emoji, feeds, main, media
+from poster import breaking, caption, channel, competitors, config, emoji, feeds, finds, links, main, media
 from poster.store import Store
 
 
@@ -165,12 +165,93 @@ class CompetitorsTest(unittest.TestCase):
         page = (
             '<div class="tgme_widget_message_wrap"><div class="tgme_widget_message_photo_wrap"></div>'
             '<div class="tgme_widget_message_text js-message_text"><b>Заголовок</b><br/>текст &amp; ещё</div>'
+            '<span class="tgme_widget_message_views">12.1K</span>'
             '<time datetime="2026-10-30T06:30:02+00:00"></time></div>'
         )
         self.assertEqual(
             competitors.parse(page, 5),
-            [{"time": "2026-10-30T06:30:02+00:00", "media": "photo", "text": "Заголовок\nтекст & ещё"}],
+            [{"time": "2026-10-30T06:30:02+00:00", "media": "photo", "text": "Заголовок\nтекст & ещё", "views": 12100}],
         )
+        self.assertEqual([competitors.views(v) for v in ("950", "1.3M", "?")], [950, 1_300_000, 0])
+
+
+class LinksTest(unittest.TestCase):
+    def test_dead_links_lose_their_word_and_a_find_needs_one(self):
+        good, gone = "https://github.com/a/b", "https://e.com/nope"
+        post = story(
+            paragraphs=[f'Valve <a href="{gone}">обновила</a> правила'],
+            kicker=f'Забираем — <a href="{good}">тут</a> 😎',
+        )
+        with mock.patch.object(links, "alive", lambda url: url == good):
+            fixed, dead = links.verify(post)
+        self.assertEqual(dead, [gone])
+        self.assertEqual(fixed["paragraphs"], ["Valve обновила правила"])
+        self.assertEqual(fixed["kicker"], post["kicker"])
+        self.assertTrue(links.found(fixed))
+        self.assertFalse(links.found(story(kicker="Дожили 💀", paragraphs=["x"])))
+
+    def test_alive(self):
+        def answer(code):
+            return mock.patch.object(
+                links.urllib.request, "urlopen", side_effect=links.urllib.error.HTTPError("u", code, "", {}, None)
+            )
+
+        with answer(404):
+            self.assertFalse(links.alive("https://e.com/x"))
+        with answer(403):  # Cloudflare refusing robots: the page is there
+            self.assertTrue(links.alive("https://e.com/x"))
+        self.assertFalse(links.alive("javascript:alert(1)"))
+
+
+class FindsTest(unittest.TestCase):
+    def test_window_kind_and_cheap_giveaways(self):
+        ts = time.time()
+        repo = {"full_name": "a/b", "description": "tool", "stargazers_count": 900, "html_url": "https://github.com/a/b",
+                "created_at": "2020-01-01T00:00:00Z"}
+        fresh_repo = dict(repo, html_url="https://github.com/a/c", created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts - 86400)))
+        gifts = [
+            {"title": "Cheap", "worth": "$4.99", "platforms": "PC", "published_date": "2026-11-04 07:40:59",
+             "open_giveaway_url": "https://g/1"},
+            {"title": "Big", "worth": "$24.99", "platforms": "PC", "published_date": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ts - 3600)),
+             "open_giveaway_url": "https://g/2", "gamerpower_url": "https://g/2i", "end_date": "N/A"},
+        ]
+
+        def fake(url):
+            return {"items": [repo, fresh_repo]} if "github" in url else gifts
+
+        with mock.patch.object(finds, "_json", fake), mock.patch.object(finds.feeds, "_fetch", return_value=[]):
+            items = finds.fresh(lambda urls: urls == ["https://github.com/a/x"], ts)
+        self.assertEqual([i["url"] for i in items], ["https://github.com/a/c", "https://g/2i"])
+        self.assertIn("★ 900", items[0]["title"])
+
+    def test_a_find_may_be_days_old_news_may_not(self):
+        store = Store(":memory:")
+        old = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(time.time() - 3 * 86400))
+        self.assertIsNone(main.check(story(kind="find", published_at=old), store, time.time()))
+        self.assertIn("stale", main.check(story(kind="news", published_at=old), store, time.time()))
+
+
+class FindTurnTest(unittest.TestCase):
+    def task(self, topics):
+        store = Store(":memory:")
+        for n, topic in enumerate(topics):
+            store.add("posted", f"https://e.com/{n}", topic=topic, headline="h", caption="")
+        with mock.patch.object(main.feeds, "fresh", return_value=[]), \
+                mock.patch.object(main.finds, "fresh", return_value=[]), \
+                mock.patch.object(main.competitors, "digest", return_value=""):
+            return main.task_text(store, time.time())
+
+    def test_a_find_after_three_news_in_a_row(self):
+        self.assertIn("сделай находку", self.task(["a", "b", "c"]))
+        self.assertNotIn("сделай находку", self.task(["a", "b"]))
+        self.assertNotIn("сделай находку", self.task(["a", "b", "c", main.FIND_TAG + "d", "e"]))
+
+
+class KickerTest(unittest.TestCase):
+    def test_closing_line_of_a_sent_caption(self):
+        sent = 'Заголовок\n\nТекст\n\nЗабираем — <a href="https://x">тут</a> 😎\n\n🐾 <a href="https://t.me/c">c</a>'
+        self.assertEqual(main.kicker(sent), "Забираем — тут 😎")
+        self.assertEqual(main.kicker("один абзац"), "")
 
 
 class FitTest(unittest.TestCase):

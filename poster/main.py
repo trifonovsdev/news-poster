@@ -10,29 +10,33 @@ import asyncio
 import json
 import logging
 import random
+import re
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
-from poster import breaking, caption, channel, competitors, config, emoji, feeds, llm, media
+from poster import breaking, caption, channel, competitors, config, emoji, feeds, finds, links, llm, media
 from poster.store import NO_MEDIA, Store
 
 SEEN = "source already used"
 
 log = logging.getLogger("news-poster")
 SEND_ATTEMPTS = 3
+FIND_TAG = "[находка] "
 
 SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "required": [
-        "skip", "skip_reason", "topic", "source_urls", "published_at",
+        "skip", "skip_reason", "kind", "topic", "source_urls", "published_at",
         "emoji", "headline", "paragraphs", "kicker", "media",
     ],
     "properties": {
         "skip": {"type": "boolean"},
         "skip_reason": {"type": "string"},
+        # news: an event of the last hours; find: a thing to try (tool, repo, free game)
+        "kind": {"enum": ["news", "find"]},
         "topic": {"type": "string"},
         "source_urls": {"type": "array", "items": {"type": "string"}},
         "published_at": {"type": "string"},
@@ -40,8 +44,9 @@ SCHEMA = {
         # Hard limits the model must keep: the prompt alone let posts run long.
         "headline": {"type": "string", "maxLength": 150},  # with <b> tags
         "paragraphs": {"type": "array", "items": {"type": "string", "maxLength": 420}, "maxItems": 3},
-        # Short on purpose: long closing lines explained the joke and killed it.
-        "kicker": {"type": "string", "maxLength": 60},
+        # 2-6 words by the prompt (long closing lines explained the joke and killed
+        # it); the room is for a find's link: «Забираем — <a href="…">тут</a>».
+        "kicker": {"type": "string", "maxLength": 250},
         "media": {
             "type": "array",
             "maxItems": 8,
@@ -93,24 +98,49 @@ def check(story: dict, store: Store, ts: float) -> str | None:
         return f"bad published_at {story['published_at']!r}"
     if published > ts + 3600:
         return f"published_at in the future: {story['published_at']}"
-    if ts - published > config.FRESH_HOURS * 3600:
+    window = config.FIND_FRESH_DAYS * 86400 if story.get("kind") == "find" else config.FRESH_HOURS * 3600
+    if ts - published > window:
         return f"stale: published {story['published_at']}"
     if not story["headline"].strip() or not any(p.strip() for p in story["paragraphs"]):
         return "empty text"
     return None
 
 
+def kicker(text: str) -> str:
+    """The closing line of a sent caption (the paragraph before the footer), so
+    the model does not repeat its own jokes and emoji."""
+    parts = text.split("\n\n")
+    return re.sub(r"<[^>]+>", "", parts[-2]).strip() if len(parts) > 2 else ""
+
+
 def task_text(store: Store, ts: float, hint: str = "", lead: str = "") -> str:
     recent = store.recent(ts - config.RECENT_DAYS * 86400)
     own = "\n".join(
         f"- {msk(r['ts']):%d.%m %H:%M} [{r['status']}] {r['topic'] or ''} — {r['headline'] or ''} ({r['url']})"
+        + (f" · кода: {kicker(r['caption'])}" if r["status"] == "posted" and r["caption"] else "")
         for r in recent
     ) or "- пока ничего"
     fresh = feeds.fresh(store.seen, ts)
+    found = finds.fresh(store.seen, ts)
+    # The prompt alone asks for «about one in three»; the model still always
+    # took news, so the turn of a find is spelled out.
+    news_in_a_row = 0
+    for r in reversed([r for r in recent if r["status"] == "posted"]):
+        if (r["topic"] or "").startswith(FIND_TAG):
+            break
+        news_in_a_row += 1
+    turn = (
+        f"Последние {news_in_a_row} постов подряд — новости. В этот раз сделай находку (kind=find) "
+        "из списка находок или найди свою; новость — только если она горячая (у двух каналов "
+        "или ⚡️-уровня).\n\n"
+        if news_in_a_row >= config.FIND_EVERY and not hint and not lead
+        else ""
+    )
     return (
         f"Сейчас {msk(ts):%Y-%m-%d %H:%M} по Москве.\n\n"
         f"# Свежие заголовки из лент за {config.FRESH_HOURS} ч (кандидаты, новые сверху)\n"
         f"{feeds.digest(fresh, ts)}\n\n"
+        f"# Находки: новое, что можно попробовать (за {config.FIND_FRESH_DAYS} дн)\n{finds.digest(found, ts)}\n\n"
         f"# Что канал уже публиковал или отклонил (не повторяй эти события)\n{own}\n\n"
         f"# Свежие посты Telegram-каналов (что уже вышло и как оформлено)\n{competitors.digest(ts)}\n\n"
         + (
@@ -118,6 +148,7 @@ def task_text(store: Store, ts: float, hint: str = "", lead: str = "") -> str:
             if config.CUSTOM_EMOJI and emoji.table()
             else ""
         )
+        + turn
         + (
             f"Редакция решила взять эту историю: {hint}\nПроверь факты и напиши пост именно о ней, "
             "аккуратно разделяя подтверждённое и то, что сообщают пользователи или каналы. "
@@ -140,6 +171,12 @@ async def make_post(store: Store, *, dry: bool, hint: str = "", lead: str = "") 
         log.info("model skipped: %s", story["skip_reason"])
         return False
     reason = check(story, store, ts)
+    if not reason:
+        story, dead = await asyncio.to_thread(links.verify, story)
+        if dead:
+            log.info("dead links unwrapped: %s", dead)
+        if story.get("kind") == "find" and not links.found(story):
+            reason = "find without a working link"
     text = caption.fit(story, config.CAPTION_LIMIT)
     if not reason and not hint:  # the owner's --topic overrides this
         rival = await asyncio.to_thread(
@@ -159,7 +196,8 @@ async def make_post(store: Store, *, dry: bool, hint: str = "", lead: str = "") 
         if not files:
             reason = NO_MEDIA
     record = dict(
-        topic=story["topic"],
+        # The tag shows the model the mix of news and finds among recent posts.
+        topic=(FIND_TAG if story.get("kind") == "find" else "") + story["topic"],
         headline=story["headline"],
         caption=text,
         media=json.dumps([m["url"] for m in story["media"]]),

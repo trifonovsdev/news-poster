@@ -10,6 +10,8 @@ right only when there is nothing else worth showing.
 
 A good image shows the news itself at a glance, on a phone screen:
 - the product, the person, the game, the device the story is about;
+- for a find (a tool, an app, a mod): its interface doing the cool thing,
+  the demo GIF frame, the game screenshot; a bare repo card or logo is weak;
 - for a feature, a payment method or a change in an app: a clean screenshot
   where the thing is visible (the new button, the card logo at checkout,
   the new screen);
@@ -28,7 +30,9 @@ Reject:
   ban or a deal often has no picture of its own: then a photo of the
   product or person it is about, or a clean official key visual, is right),
   memes that are not the story, ads and banners;
-- images with a lot of text in another language that the reader must read;
+- images with a lot of text in another language that the reader must read
+  (a screenshot of a tool's or a game's own interface is fine: that is the
+  thing itself);
 - the same shot twice, even cropped or at another size.
 
 How many:

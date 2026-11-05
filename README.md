@@ -2,17 +2,24 @@
 
 An autonomous news editor for a Russian-language Telegram channel about tech,
 AI, games, gadgets and internet culture. Claude Sonnet (headless Claude Code)
-picks one fresh story per run, writes the post in the style of @technomotel
-(a CAPS hook, bold key facts, a 2–6 word punchline with an emoji), and picks
-a photo album or a video. Code checks the result and posts it.
+picks one post per run, writes it and picks a photo album or a video. Code
+checks the result and posts it. Two kinds of posts: news in the style of
+@technomotel (a CAPS hook, bold key facts, a 2–6 word punchline with an
+emoji) and «находки», things to try today, in the style of @lolzteam and
+@ulta_games (what it does, a «➖» list, «Забираем — тут» with the link on the
+word); about one post in three is a find.
 
 - Each run, the model gets fresh headlines (≤ 6 h, from ~35 RSS feeds in
-  `poster/feeds.py`), the competitors' latest posts (public `t.me/s/`
-  preview, no Telegram account needed) and the channel's own last 3 days. It
-  may use web search and fetch only: `prompts/news.md`.
+  `poster/feeds.py`), finds (≤ 7 days: GitHub repos created lately with the
+  most stars, Show HN 100+, PC game giveaways worth $15+; `poster/finds.py`),
+  the competitors' latest posts with their views (public `t.me/s/` preview,
+  no Telegram account needed) and the channel's own last 3 days with their
+  kickers. It scores candidates (try / money / wow / drama / fandom / Russia /
+  proof) and may use web search and fetch only: `prompts/news.md`.
 - Code checks the answer (`poster/main.py`): source not used before,
-  published at most 6 h ago, caption ≤ 1024 (shortened if needed), media
-  present. The caption is built by `poster/caption.py`; only `<b> <i> <u> <s>
+  published at most 6 h ago (a find: 7 days), every link opens
+  (`poster/links.py`: a dead one loses its link, a find without a working
+  link is dropped), caption ≤ 1024 (shortened if needed), media present. The caption is built by `poster/caption.py`; only `<b> <i> <u> <s>
   <code> <a href=http…>` survive.
 - Premium emoji (`poster/emoji.py`): the headline's lead emoji and the
   kicker's go out as custom emoji from `poster/custom_emoji.json` (ids taken

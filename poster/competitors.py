@@ -18,6 +18,15 @@ _TEXT = re.compile(r'<div class="tgme_widget_message_text[^>]*>(.*?)</div>', re.
 HOT_HOURS = 3
 COVERED_HOURS = 24
 _TIME = re.compile(r'<time[^>]*datetime="([^"]+)"')
+_VIEWS = re.compile(r'tgme_widget_message_views">([^<]+)<')
+
+
+def views(text: str) -> int:
+    """«12.1K» -> 12100."""
+    m = re.fullmatch(r"([\d.]+)([KM]?)", text.strip())
+    if not m:
+        return 0
+    return int(float(m.group(1)) * {"": 1, "K": 1_000, "M": 1_000_000}[m.group(2)])
 
 
 def parse(page: str, limit: int) -> list[dict]:
@@ -30,7 +39,13 @@ def parse(page: str, limit: int) -> list[dict]:
         text = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
         when = _TIME.search(block)
         media = "video" if "video_player" in block else "photo" if "photo_wrap" in block else "none"
-        posts.append({"time": when.group(1) if when else "", "media": media, "text": text})
+        seen = _VIEWS.search(block)
+        posts.append({
+            "time": when.group(1) if when else "",
+            "media": media,
+            "text": text,
+            "views": views(seen.group(1)) if seen else 0,
+        })
     return posts[-limit:]
 
 
@@ -56,7 +71,12 @@ def digest(ts: float) -> str:
             if when is None or when > COVERED_HOURS:
                 continue
             if when > HOT_HOURS:  # only to know the story is taken
-                lines.append(f"[{when:.0f} ч назад, уже было] {post['text'].splitlines()[0][:150]}")
+                # Views show what the audience reads (they grow with age, so the
+                # model compares posts of similar age).
+                lines.append(
+                    f"[{when:.0f} ч назад, уже было, {post['views'] / 1000:.1f}K просмотров] "
+                    f"{post['text'].splitlines()[0][:150]}"
+                )
             else:
                 lines.append(f"[{when:.1f} ч назад, медиа: {post['media']}]\n{post['text'][:700]}")
         parts.append("\n\n".join(lines) if len(lines) > 1 else f"{lines[0]}: свежих постов нет")

@@ -63,6 +63,6 @@ class Store:
 
     def recent(self, since: float):
         return self.db.execute(
-            "SELECT ts, status, url, topic, headline, reason FROM stories WHERE ts>=? ORDER BY ts",
+            "SELECT ts, status, url, topic, headline, caption, reason FROM stories WHERE ts>=? ORDER BY ts",
             (since,),
         ).fetchall()
