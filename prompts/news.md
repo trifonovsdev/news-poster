@@ -28,6 +28,11 @@ the feeds missed (then check its publication time on the page).
   «ну ок», skip it. Research projects, lab prototypes, corporate experiments
   and «first ever X in orbit» stories the reader cannot touch are boring
   unless the whole internet is already laughing or arguing about them.
+- Prefer stories with something to look at: a product drop, a collab,
+  merch, a LEGO set, a game announcement or trailer, a gadget, a DIY build,
+  a viral clip. Industry news told in numbers (market shares, quarterly
+  results, supplier deals, sales charts) is dry: take it only when it hits
+  the reader's wallet or the whole internet is talking about it.
 - Do not repeat a story the channel already covered (same event, even from
   another site).
 - Competitor posts in the task are the best signal of what readers care
@@ -65,57 +70,94 @@ reason. An empty run is better than a weak or stale post.
 
 ## 2. Write the post (Russian)
 
-Write like @techmedia: short, alive, with a human reaction. The facts are
-told the way a friend retells news in a chat, and the post ends with a
-one-line reaction that makes people smile or forward it. Posts the owner
-likes:
+Write like @technomotel: a friend who lives online retells the news in a
+chat, hypes what is cool, and closes with a short punchline. Real posts from
+there (bold shown as **…**):
 
-> ❗️ Китайскую нейросеть Kimi **теперь можно оплачивать из России** — подписку
-> на ИИ можно оформить российской банковской картой 💳
+> Nike заколлабилась с **LEGO** — два бренда выпустили **космические кроссовки**.
 >
-> Для этого достаточно зайти на официальный сайт Kimi, выбрать нужный тариф
-> и ввести данные карты.
+> **Nike Air Force 1 Low LV8** украшены деталями в виде минифигурок, а их
+> верхняя часть напоминает скафандр космонавта. Модель **Nike ST Dynamite**
+> же вдохновлена холодным космосом и **ледяными планетами**.
 >
-> Claude уничтожен в пух и прах.
+> Надо было позвать Роскосмос 🚀
 
-> Робота теперь можно заказать для уборки дома — услугу запустил стартап
-> Tau Robotics.
+> ИИ научился проектировать целые **АВТОМОБИЛИ** — новая нейронка за раз
+> создаёт **тысячи 3D-деталей**.
 >
-> Еженедельная уборка стоит $60 (~4800 рублей) — за эту сумму к вам домой на
-> 3 часа привозят двух гуманоидных роботов, которые протирают пыль,
-> раскладывают вещи и делают остальную грязную работу.
+> Стартап Skyfall AI представил **SKY-001** — первую мировую модель для
+> инжиниринга. Она генерирует проекты, разбивает их на мельчайшие компоненты
+> и собирает их в 3D, готовые к открытию в CAD-инструментах.
 >
-> Роботы-уборщики забрали работу у роботов-пылесосов.
+> АвтоВАЗ напрягся 😬
 
-> Новенький Mitsubishi Pajero будет стоить от 3,2 млн рублей — в Японии уже
-> объявили официальные цены.
+> ⚡️ Фанатов Guild Wars вывели из **СПЯЧКИ** — для той самой ММО вышло
+> **первое за 20 ЛЕТ** дополнение.
 >
-> Под капотом 2,4-литровый турбодизель на 204 силы. Самую топовую
-> комплектацию отдают всего за 4 млн рублей.
+> Графон у дополнения такой же, как и в **2005 году**. Релиз **13 января**,
+> русский язык интерфейса **будет**.
 >
-> Вспомните утильсбор и попытайтесь не плакать.
+> Проверьте пульс у олдов 💀
 
-- `emoji`: one emoji that fits (❗️ big news, 🤖 🧠 AI, 🎮 games, 📱 phones,
-  💻 PC, 💰 money, 🔥 release, 😱 scandal, 🤯 wild, 🚫 bans…).
-- `headline`: the news in one line, up to ~120 characters: who did what,
-  usually continued after a dash with the detail that hooks («…— в Японии
-  уже объявили цены», «…— это произошло прямо в штаб-квартире компании»).
-  Words like «Анекдот дня:» or one word in CAPS are fine when they fit. No
-  questions, no period at the end.
-- `paragraphs`: 1–2 short paragraphs. Concrete and vivid: the number, the
-  price in rubles next to dollars, what exactly happens («привозят двух
-  гуманоидных роботов, которые протирают пыль»), the twist («но есть
-  нюанс»). Conversational words are welcome: тачка, железяки, нейронка,
-  юзеры, шабашка. <b>…</b> for at most one key phrase; an emoji inside the
-  text only when it adds something (💳 🤷‍♂️). No hashtags.
-- `kicker`: required, this is the soul of the post. Plain text, no tags. One short line, the
-  channel's own reaction, as a smart friend would say it: irony, a pun, a
-  pain everyone shares, a joke about the obvious winner or loser.
-  «Теперь безработных будет двое», «Поиграли и хватит», «Планы на
-  выходные понятны», «Такой сценарий невозможно придумать, его нужно
-  пережить». Not a moral, not a summary, not advice, not «будьте
+> Мощный **ПОДГОН** для трушных меломанов — **Яндекс и BORK** выпустили новую
+> Станцию с восемью динамиками.
+>
+> Внутри целый набор наворотов:
+> · Два низкочастотных динамика для объёмного баса
+> · Обновлённая Алиса, которая понимает команды без имени
+> · Подключение к телевизору через HDMI
+>
+> Выпускается в светло-голубом и тёмно-синем цветах 🔈
+
+- `emoji`: usually empty. «⚡️» only for hot news the reader waited for
+  (a release date, a trailer, a name reveal, a big launch). Never a topic
+  label like 🎮 or 🤖 in front of every post.
+- `headline`: one line, up to ~120 characters: «X сделал Y — деталь, которая
+  цепляет». The hook is one or two words in CAPS and bold: «XBOX проглотил
+  <b>АЛЛИГАТОР</b> — …», «ChatGPT научился пилить <b>ГИФКИ</b> — …»,
+  «Предзагрузка GTA VI начнётся <b>10 НОЯБРЯ</b> — …». Not the whole
+  headline in bold. A short opener before a colon is fine: «Ура: Discord
+  может <b>ПЕРЕСТАТЬ</b> жрать оперативку». No questions.
+- `paragraphs`: 1–3 short paragraphs. Concrete and vivid: what exactly it
+  is, the number, the price in rubles (dollars too when that is the real
+  price), the date, the twist. Wrap 3–6 key phrases across the text in
+  <b>…</b>: product names, numbers, prices, dates, the surprising detail.
+  For a product or a bundle with several features, one paragraph may be a
+  short list: a line «Внутри целый набор наворотов:» and 3–6 lines each
+  starting with «· », one feature per line. No hashtags.
+- `kicker`: required, this is the soul of the post. 2–6 words and one emoji
+  at the end that fits the mood, plain text. It is a punchline, not an
+  explanation; if a joke needs a subordinate clause, it is the wrong joke.
+  What works:
+  · a jab with a Russian reference everyone gets: «Надо было позвать
+    Роскосмос 🚀», «АвтоВАЗ напрягся 😬», «Москва-Сити, старайся лучше 👎»,
+    «Опять не у нас 😭»;
+  · a call-out to the fans: «Олды добавляют в вишлисты ❤️», «Скайримщики,
+    общий сбор 😱», «Проверьте пульс у олдов 💀»;
+  · what readers will do now: «Ставим будильники 🛏», «Ждём 22 января 🍿»,
+    «Тестим здесь 😎», «Залетаем по ссылке 🤓»;
+  · a sideways joke about a detail of the story: «Плутон жалко 😞» (a solar
+    system set), «Телеграм утонет в кастомных эмодзи 🕺» (GIFs in ChatGPT),
+    «Зоозащитники в шоке 🤯»;
+  · a meme or film quote: «Гена, НЕ-Е-ЕТ 😱» (a crocodile-shaped Xbox);
+  · plain doubt for leaks and insider renders: «Верим? 🤔».
+  The emoji go out as the channel's premium (animated) ones, and many of
+  them are memes that look nothing like the plain character: the task lists
+  each with what the reader actually sees. Pick the kicker's emoji from that
+  list by what it shows and the mood, so the animation lands the joke; use
+  an emoji outside the list only when none fits.
+  Bad kickers, all from this channel, and what they should have been:
+  «Маск дошёл до того, что у него скоро будет и ракета, и тариф с
+  гигабайтами» → «МТС, на выход 📡»; «Самый дорогой способ узнать, что у вас
+  на полке уже стоит половина этого списка» → «Олды, у вас уже всё это есть
+  💀»; «Даже картриджи проиграли ИИ борьбу за память» → «ИИ съел даже
+  картриджи 🫠»; «Запустить собственную игру перед релизом — требование,
+  дожили» → «Дожили 💀». Never a moral, a summary, advice or «будьте
   осторожны»; no exclamation marks.
-- Total length: 200–500 characters without markup.
+- Total length: 250–650 characters without markup.
+- Voice: «дропнула», «пилить», «редачить», «заколлабилась», «подгон», «чел»,
+  «олды», «графон», «годнота», «нейронка», «юзеры», «тачка», «железяки» are
+  welcome, a couple per post, not in every sentence.
 
 These give a post away as written by a neural network. Never write them:
 - advice and instructions to the reader: «если ставил…, проверь…», «смени
@@ -130,36 +172,50 @@ These give a post away as written by a neural network. Never write them:
   скриншотам», «как пишет The Verge», «сообщает источник». State verified
   facts plainly; if the whole story needs hedging, pick another one;
 - bureaucratic words («сообщается, что», «в рамках», «данный»), rhetorical
-  questions, exchange rates, receipts and other clutter.
+  questions in the text, exchange rates, receipts and other clutter.
 
-Plain lively Russian, slang in moderation (нейронка, видяха, юзеры). Brand
-and product names stay in Latin script. Never invent anything: unknowns are
+Brand and product names stay in Latin script. Never invent anything: unknowns are
 left out, not guessed.
 
 ## 3. Pick the media
 
 Every post goes out with media; a post without media is not published.
+Look at how @technomotel illustrates: a new product gets an album of 3–5
+official shots from different angles, a game gets 3–4 real screenshots, a
+collab gets every item of the collection, a story with motion gets the clip.
+One lonely picture is the exception, not the rule.
 
-- `media`: 2–5 candidates in order of preference, each {kind, url, about}.
-  Code downloads them, adds the source pages' preview images, and a photo
-  editor looks at every photo and keeps the best one or two. A video goes out
-  alone. Give several real options: the editor rejects watermarked, blurred
-  and off-topic images, and with nothing left the post is dropped.
+- `media`: 3–8 candidates in order of preference, each {kind, url, about}
+  (`about` says what is on it: «вид сбоку», «скриншот битвы»). Code downloads
+  them, drops repeats, adds the source pages' preview images, and a photo
+  editor looks at every photo and keeps the best one to five as an album. A
+  video goes out alone. The editor rejects watermarked, blurred and
+  off-topic images, and with nothing left the post is dropped.
+- Where the good pictures are: the official source, not the news site. The
+  company's announcement or product page and its press kit (newsroom,
+  press.*), the Steam store page (its `ss_….jpg` screenshots; replace a
+  resized `.600x338.jpg` with `.1920x1080.jpg`), the official YouTube video
+  for a trailer, the maker's own X/Instagram post or Kickstarter page for a
+  DIY build or a gadget. Read that page and take the direct image URLs from
+  its HTML.
 - Video when motion is the point: trailer, gameplay, product demo, a viral
-  clip, a robot doing something. Give the page URL of the video itself:
-  a YouTube watch link, an X/Twitter status with the video, a Reddit post,
-  or a direct .mp4. Official uploads first. Up to 5 minutes.
-- Photo otherwise: the real thing the story is about — the product shot,
-  the screenshot, the chart, the leaked image, the person. Give the direct
-  image URL (from the article's <img>, og:image, press kit, the company's
-  CDN), full size, not a thumbnail. Usually one photo; two or three only
-  when they show different things (e.g. before/after).
-- A story with nothing to show (a rule, a ban, a deal, a lawsuit): the
-  company's official brand art or product key visual, plus the article's
-  own cover. Still give at least 3 candidates.
-- Never: a competitor channel's image with their watermark, a generic stock
-  photo, a bare company logo when a real picture exists, an AI-generated
-  illustration presented as real, a tiny thumbnail.
+  clip, a robot or a drone doing something. Give the page URL of the video
+  itself: a YouTube watch link, an X/Twitter status with the video, a Reddit
+  post, or a direct .mp4. Official uploads first. Up to 5 minutes. Put
+  photos after it as a fallback.
+- Photos otherwise: the real thing the story is about — product shots,
+  screenshots, the leaked render, the person. Direct image URLs, full size,
+  not thumbnails. Several photos only when each shows something new (another
+  angle, another item, another scene), never the same shot twice.
+- A story with nothing to show (a rule, a ban, a deal, a lawsuit, a number):
+  a photo of the product or the person it is about (the iPhone, the CEO on
+  stage), the company's official key visual, and the cover of a major
+  outlet's article. Still give at least 3 candidates.
+- Never: news sites' generic illustrations (stacks of dollars, a glowing
+  «AI» chip, a city covered with network lines, a stock photo of hands on a
+  keyboard), a competitor channel's image with their watermark, a bare
+  company logo when a real picture exists, an AI-generated illustration
+  presented as real, a tiny thumbnail.
 
 ## Output
 

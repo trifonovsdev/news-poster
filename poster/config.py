@@ -37,9 +37,16 @@ FOOTER = os.environ.get("FOOTER") or f'🐾 <a href="{CHANNEL_URL}"><b>{CHANNEL_
 # Posts go out either through a bot that is an admin of the channel (Bot API)...
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 CHANNEL_ID = os.environ.get("CHANNEL_ID", "")  # @username or -100… id
+# Custom emoji need a Premium sender: the user account behind the socket has it,
+# a bot (without a Fragment username) does not.
+CUSTOM_EMOJI = os.environ.get("CUSTOM_EMOJI", "0" if BOT_TOKEN else "1") == "1"
 # ...or, without BOT_TOKEN, through a local socket that speaks for a user account
 # (see README, "Posting as a user account").
 CHANNEL_SOCKET = Path(os.environ.get("CHANNEL_SOCKET", "/run/news-poster/channel.sock"))
+# ...or, with CHANNEL_MCP=1, through the local telegram-mcp server as the host's
+# default account (CHANNEL_ID is then needed too).
+CHANNEL_MCP = os.environ.get("CHANNEL_MCP", "") == "1"
+TELEGRAM_MCP = Path(os.environ.get("TELEGRAM_MCP", "/root/.local/share/telegram-mcp/bin/telegram-mcp-redacted"))
 
 MODEL = os.environ.get("MODEL", "claude-sonnet-5-5")
 NEWS_TIMEOUT_SECONDS = 20 * 60
@@ -64,6 +71,7 @@ COMPETITORS = ("techmedia", "lolzteam", "technomotel")
 SOURCE_CHANNELS = (*COMPETITORS, "bugnotfeature", "exploitex", "data_secrets", "ai_newz")
 COMPETITOR_POSTS = 10  # latest posts per channel, within FRESH_HOURS
 
+ALBUM_MAX = 5  # photos in one post: product angles, game screenshots
 CAPTION_LIMIT = 1024  # Telegram's caption limit for an account without Premium
 PHOTO_MIN_SIZE = (640, 360)  # a typical news picture is 800x450
 PHOTO_MAX_BYTES = 10 * 1024 * 1024

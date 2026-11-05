@@ -2,8 +2,9 @@
 
 An autonomous news editor for a Russian-language Telegram channel about tech,
 AI, games, gadgets and internet culture. Claude Sonnet (headless Claude Code)
-picks one fresh story per run, writes the post in the style of @techmedia,
-@lolzteam and @technomotel, and picks photos or a video. Code checks the result and posts it.
+picks one fresh story per run, writes the post in the style of @technomotel
+(a CAPS hook, bold key facts, a 2–6 word punchline with an emoji), and picks
+a photo album or a video. Code checks the result and posts it.
 
 - Each run, the model gets fresh headlines (≤ 6 h, from ~35 RSS feeds in
   `poster/feeds.py`), the competitors' latest posts (public `t.me/s/`
@@ -13,11 +14,18 @@ picks one fresh story per run, writes the post in the style of @techmedia,
   published at most 6 h ago, caption ≤ 1024 (shortened if needed), media
   present. The caption is built by `poster/caption.py`; only `<b> <i> <u> <s>
   <code> <a href=http…>` survive.
+- Premium emoji (`poster/emoji.py`): the headline's lead emoji and the
+  kicker's go out as custom emoji from `poster/custom_emoji.json` (ids taken
+  from @technomotel, @techmedia and @lolzteam, each described by what its
+  animation shows, since many are memes; the model gets that list). Telegram
+  shows them only when the posting account has Premium; `CUSTOM_EMOJI=0` in
+  `.env` turns them off (off by default for a bot).
 - Media (`poster/media.py`): one video (yt-dlp, ≤ 5 min, ≤ 50 MB, H.264 or
   converted), or photos: every candidate that downloads (at least 640×360,
-  saved as JPEG) plus the source pages' og:image goes to a second, short
-  model run (`prompts/pick.md`, Read tool only) that looks at them and keeps
-  one or two, rejecting watermarks, blur and off-topic shots. No media, no post.
+  saved as JPEG) plus the source pages' og:image, without repeats of one
+  picture, goes to a second, short model run (`prompts/pick.md`, Read tool
+  only) that looks at them and keeps one to five as an album, rejecting
+  watermarks, blur, stock illustrations and off-topic shots. No media, no post.
 - Breaking (`poster/breaking.py`): every 5 min code reads the source Telegram
   channels; a story two of them posted within 3 hours (two shared names) and
   the channel has not covered starts a run before the usual gap ends (20 min
@@ -62,7 +70,15 @@ in `data/run/news-last.jsonl`.
 
 ## Posting as a user account
 
-Without `BOT_TOKEN`, posts go to the unix socket `CHANNEL_SOCKET`, served by a
+With `CHANNEL_MCP=1` (and `CHANNEL_ID`), each post starts the host's
+telegram-mcp server (`TELEGRAM_MCP`, the redacting wrapper by default) for its
+default account and calls `send_file` with the caption as HTML; the server may
+read only `data/media`. The wrapper takes that session's lock in shared mode,
+like the owner's Claude sessions on the same host and IP, so the account keeps
+working there. A FloodWait in the answer holds the channel for at least an hour.
+This is how the channel posts as рейман, whose Premium shows the custom emoji.
+
+Otherwise, without `BOT_TOKEN`, posts go to the unix socket `CHANNEL_SOCKET`, served by a
 process that holds a user account's Telegram connection (a user account may
 have only one). One JSON line per request: `{"tool": "status"}` answers `ok`
 or `held <seconds>` without calling Telegram; `{"tool": "send_file", "args":

@@ -1,13 +1,17 @@
-"""Publishing to the channel: through a bot (Bot API) or a user account's local socket.
+"""Publishing to the channel: through a bot, telegram-mcp, or a user account's socket.
 
-With BOT_TOKEN set, posts go through the Bot API. Without it, they go through
-CHANNEL_SOCKET, a unix socket served by a process that holds a user account's
-Telegram connection (one JSON line per request: {"tool", "args"} -> {"text"} or
-{"error"}; tools "status" and "send_file" as in telegram-mcp).
+With BOT_TOKEN set, posts go through the Bot API. With CHANNEL_MCP=1, each post
+starts the local telegram-mcp server for the host's default user account and
+calls its send_file (see "Posting as a user account" in the README). Otherwise
+they go through CHANNEL_SOCKET, a unix socket served by a process that holds a
+user account's Telegram connection (one JSON line per request: {"tool", "args"}
+-> {"text"} or {"error"}; tools "status" and "send_file" as in telegram-mcp).
 """
 
 import asyncio
 import json
+import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -54,6 +58,96 @@ async def _socket_status() -> int:
     if text == "ok":
         return 0
     return int(text.split()[1])
+
+
+# --- user account through telegram-mcp --------------------------------------------
+
+_mcp_held_until = 0.0  # from the FloodWait of the last send
+FLOOD = ("FLOOD_WAIT", "FloodWait", "PEER_FLOOD", "SLOWMODE_WAIT")
+MIN_HOLD_SECONDS = 3600
+
+
+async def _mcp_send_file(file_path, caption: str) -> str:
+    """One session of the server: start, initialize, send_file, stop."""
+    env = dict(
+        os.environ,
+        TELEGRAM_EXPOSED_TOOLS="read-only+send_file",  # the server has no smaller set
+        # The only folder send_file may read. Without roots support in this client
+        # the server would wait for roots/list and then disable file tools.
+        TELEGRAM_ALLOWED_ROOTS=str(config.MEDIA),
+        TELEGRAM_SERVER_ROOTS_ONLY="1",
+    )
+    # No TELEGRAM_ONLY_ACCOUNT: the wrapper then loads only the default account
+    # and takes its session lock in shared mode, like the owner's Claude sessions
+    # on this host (one egress IP, so Telegram sees one client).
+    env.pop("TELEGRAM_ONLY_ACCOUNT", None)
+    proc = await asyncio.create_subprocess_exec(
+        str(config.TELEGRAM_MCP),
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+        env=env,
+        limit=16 * 1024 * 1024,
+    )
+
+    async def request(n: int, method: str, params: dict) -> dict:
+        message = {"jsonrpc": "2.0", "id": n, "method": method, "params": params}
+        proc.stdin.write((json.dumps(message, ensure_ascii=False) + "\n").encode())
+        await proc.stdin.drain()
+        async for line in proc.stdout:
+            try:
+                reply = json.loads(line)
+            except ValueError:
+                continue
+            if reply.get("id") == n:
+                if "error" in reply:
+                    raise ChannelError(f"{method}: {reply['error'].get('message', reply['error'])}"[:300])
+                return reply.get("result", {})
+        raise ChannelError("telegram-mcp exited")
+
+    try:
+        await asyncio.wait_for(
+            request(1, "initialize", {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "news-poster", "version": "1"},
+            }),
+            120,
+        )
+        proc.stdin.write(b'{"jsonrpc": "2.0", "method": "notifications/initialized"}\n')
+        await proc.stdin.drain()
+        result = await asyncio.wait_for(
+            request(2, "tools/call", {
+                "name": "send_file",
+                "arguments": {
+                    "chat_id": config.CHANNEL_ID,
+                    "file_path": file_path,
+                    "caption": caption,
+                    "parse_mode": "html",
+                },
+            }),
+            300,  # uploading a 50 MB video takes a while
+        )
+        return "".join(part.get("text", "") for part in result.get("content", []))
+    finally:
+        if proc.returncode is None:
+            proc.terminate()
+            try:
+                await asyncio.wait_for(proc.wait(), 30)
+            except asyncio.TimeoutError:
+                proc.kill()
+
+
+async def _mcp_publish(caption: str, files: list[Path]) -> None:
+    global _mcp_held_until
+    paths = [str(f) for f in files]
+    text = await _mcp_send_file(paths if len(paths) > 1 else paths[0], caption)
+    if any(marker in text for marker in FLOOD):
+        match = re.search(r"(\d+) seconds", text)
+        _mcp_held_until = time.time() + max(int(match.group(1)) if match else 0, MIN_HOLD_SECONDS)
+    # telegram-mcp reports Telegram-side failures as text, not as errors.
+    if not text.startswith(("File sent", "Album sent")):
+        raise ChannelError(text[:300])
 
 
 # --- bot through the Bot API -----------------------------------------------------
@@ -125,11 +219,15 @@ async def status() -> int:
     """0 if a post can go out now, else seconds to wait. Touches no Telegram method."""
     if config.BOT_TOKEN:
         return max(0, int(_bot_held_until - time.time()))
+    if config.CHANNEL_MCP:
+        return max(0, int(_mcp_held_until - time.time()))
     return await _socket_status()
 
 
 async def publish(caption: str, files: list[Path]) -> None:
     if config.BOT_TOKEN:
         await asyncio.to_thread(_bot_send, caption, files)
+    elif config.CHANNEL_MCP:
+        await _mcp_publish(caption, files)
     else:
         await _socket_publish(caption, files)

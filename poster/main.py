@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from poster import breaking, caption, channel, competitors, config, feeds, llm, media
+from poster import breaking, caption, channel, competitors, config, emoji, feeds, llm, media
 from poster.store import NO_MEDIA, Store
 
 SEEN = "source already used"
@@ -38,12 +38,13 @@ SCHEMA = {
         "published_at": {"type": "string"},
         "emoji": {"type": "string"},
         # Hard limits the model must keep: the prompt alone let posts run long.
-        "headline": {"type": "string", "maxLength": 130},
-        "paragraphs": {"type": "array", "items": {"type": "string", "maxLength": 320}, "maxItems": 2},
-        "kicker": {"type": "string", "maxLength": 120},
+        "headline": {"type": "string", "maxLength": 150},  # with <b> tags
+        "paragraphs": {"type": "array", "items": {"type": "string", "maxLength": 420}, "maxItems": 3},
+        # Short on purpose: long closing lines explained the joke and killed it.
+        "kicker": {"type": "string", "maxLength": 60},
         "media": {
             "type": "array",
-            "maxItems": 4,
+            "maxItems": 8,
             "items": {
                 "type": "object",
                 "additionalProperties": False,
@@ -112,6 +113,11 @@ def task_text(store: Store, ts: float, hint: str = "", lead: str = "") -> str:
         f"{feeds.digest(fresh, ts)}\n\n"
         f"# Что канал уже публиковал или отклонил (не повторяй эти события)\n{own}\n\n"
         f"# Свежие посты Telegram-каналов (что уже вышло и как оформлено)\n{competitors.digest(ts)}\n\n"
+        + (
+            f"# Премиум-эмодзи канала (что на самом деле видит читатель)\n{emoji.catalog()}\n\n"
+            if config.CUSTOM_EMOJI and emoji.table()
+            else ""
+        )
         + (
             f"Редакция решила взять эту историю: {hint}\nПроверь факты и напиши пост именно о ней, "
             "аккуратно разделяя подтверждённое и то, что сообщают пользователи или каналы. "
@@ -184,7 +190,7 @@ PICK_SCHEMA = {
     "additionalProperties": False,
     "required": ["chosen", "reason"],
     "properties": {
-        "chosen": {"type": "array", "items": {"type": "string"}, "maxItems": 2},
+        "chosen": {"type": "array", "items": {"type": "string"}, "maxItems": config.ALBUM_MAX},
         "reason": {"type": "string"},
     },
 }

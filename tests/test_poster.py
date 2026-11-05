@@ -8,7 +8,7 @@ from unittest import mock
 
 from PIL import Image
 
-from poster import breaking, caption, channel, competitors, config, feeds, main, media
+from poster import breaking, caption, channel, competitors, config, emoji, feeds, main, media
 from poster.store import Store
 
 
@@ -30,9 +30,15 @@ def story(**overrides):
 
 
 class CaptionTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(config, "CUSTOM_EMOJI", False)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_render_keeps_only_safe_markup(self):
         text = caption.render(story())
-        self.assertTrue(text.startswith("🤖 <b>Вышла новая нейронка</b>\n\n"))
+        self.assertTrue(text.startswith("🤖 Вышла <b>новая</b> нейронка\n\n"))
+        self.assertTrue(caption.render(story(emoji="")).startswith("Вышла"))
         self.assertIn("<b>главным</b>", text)
         self.assertIn("&lt;", "".join(caption.clean("a < b")))
         self.assertNotIn("<script>", text)
@@ -46,6 +52,43 @@ class CaptionTest(unittest.TestCase):
 
     def test_visible_length_counts_utf16_without_markup(self):
         self.assertEqual(caption.visible_length("<b>ab</b> &amp; 🐾"), 7)
+
+
+class EmojiTest(unittest.TestCase):
+    TABLE = {
+        "💀": {"id": "1", "shows": "кот", "mood": "ирония"},
+        "⚡": {"id": "2", "shows": "молния", "mood": "срочно"},
+        "🤦‍♂": {"id": "3", "shows": "фейспалм", "mood": "стыд"},
+    }
+
+    def setUp(self):
+        emoji._pattern.cache_clear()
+        for patcher in (
+            mock.patch.object(emoji, "table", lambda: self.TABLE),
+            mock.patch.object(config, "CUSTOM_EMOJI", True),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.addCleanup(emoji._pattern.cache_clear)
+
+    def test_known_emoji_in_text_become_custom(self):
+        self.assertEqual(
+            emoji.premium('<b>Дожили</b> 💀 <a href="https://e.com/💀">x</a> 🙂'),
+            '<b>Дожили</b> <tg-emoji emoji-id="1">💀</tg-emoji> <a href="https://e.com/💀">x</a> 🙂',
+        )
+        self.assertEqual(emoji.premium("⚡️ и ⚡"), '<tg-emoji emoji-id="2">⚡️</tg-emoji> и <tg-emoji emoji-id="2">⚡</tg-emoji>')
+        self.assertEqual(emoji.premium("🤦‍♂️"), '<tg-emoji emoji-id="3">🤦‍♂️</tg-emoji>')
+
+    def test_caption_uses_them_but_counts_only_the_character(self):
+        text = caption.render(story(emoji="⚡️", kicker="Дожили 💀"))
+        self.assertTrue(text.startswith('<tg-emoji emoji-id="2">⚡️</tg-emoji> Вышла'))
+        self.assertIn('Дожили <tg-emoji emoji-id="1">💀</tg-emoji>', text)
+        self.assertNotIn("tg-emoji", caption.render(story(emoji="", kicker="", paragraphs=["Бан 💀"])))
+        with mock.patch.object(config, "CUSTOM_EMOJI", False):
+            plain = caption.render(story(emoji="⚡️", kicker="Дожили 💀"))
+        self.assertNotIn("tg-emoji", plain)
+        self.assertEqual(caption.visible_length(text), caption.visible_length(plain))
+        self.assertIn("💀 — кот (ирония)", emoji.catalog())
 
 
 class CheckTest(unittest.TestCase):
@@ -97,6 +140,18 @@ class MediaTest(unittest.TestCase):
             with mock.patch.object(media, "_get", return_value=self.png(3000, 600)):
                 with self.assertRaises(media.MediaError):
                     media.photo("https://e.com/i.png", dest)
+
+    def test_repeats_of_one_picture_are_dropped_keeping_the_largest(self):
+        def picture(flip):
+            image = Image.linear_gradient("L").rotate(90).resize((800, 450)).convert("RGB")  # left to right
+            return image.transpose(Image.Transpose.FLIP_LEFT_RIGHT) if flip else image
+
+        with tempfile.TemporaryDirectory() as tmp:
+            small, other, big = (Path(tmp) / n for n in ("small.jpg", "other.jpg", "big.jpg"))
+            picture(False).resize((640, 360)).save(small, quality=60)
+            picture(True).save(other)
+            picture(False).resize((1600, 900)).save(big, quality=95)
+            self.assertEqual(media.unique([small, other, big]), [big, other])
 
     def test_only_web_addresses(self):
         with self.assertRaises(media.MediaError):
@@ -235,6 +290,54 @@ class BotTest(unittest.TestCase):
                     channel._bot_send("c", [photo])
                 self.assertGreater(asyncio.run(channel.status()), 100)
         channel._bot_held_until = 0.0
+
+
+FAKE_MCP = """#!/usr/bin/env python3
+import json, os, sys
+for line in sys.stdin:
+    m = json.loads(line)
+    if m.get("method") == "initialize":
+        result = {"serverInfo": {"name": "fake"}}
+    elif m.get("method") == "tools/call":
+        a = m["params"]["arguments"]
+        text = os.environ["FAKE_REPLY"] if "FAKE_REPLY" in os.environ else (
+            "Album sent to %s" if isinstance(a["file_path"], list) else "File sent to %s") % a["chat_id"]
+        text += " | " + os.environ["TELEGRAM_EXPOSED_TOOLS"] + " | " + a["parse_mode"]
+        result = {"content": [{"type": "text", "text": text}]}
+    else:
+        continue
+    print(json.dumps({"jsonrpc": "2.0", "id": m["id"], "result": result}), flush=True)
+"""
+
+
+class McpChannelTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        server = Path(tmp.name) / "fake-mcp"
+        server.write_text(FAKE_MCP)
+        server.chmod(0o755)
+        for patcher in (
+            mock.patch.object(config, "TELEGRAM_MCP", server),
+            mock.patch.object(config, "CHANNEL_MCP", True),
+            mock.patch.object(config, "BOT_TOKEN", ""),
+            mock.patch.object(config, "CHANNEL_ID", "@chan"),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.addCleanup(setattr, channel, "_mcp_held_until", 0.0)
+
+    def test_album_goes_out_through_send_file_only(self):
+        text = asyncio.run(channel._mcp_send_file(["/m/a.jpg", "/m/b.jpg"], "<b>c</b>"))
+        self.assertEqual(text, "Album sent to @chan | read-only+send_file | html")
+        asyncio.run(channel.publish("c", [Path("/m/a.jpg")]))
+        self.assertEqual(asyncio.run(channel.status()), 0)
+
+    def test_flood_holds_the_channel(self):
+        with mock.patch.dict(channel.os.environ, {"FAKE_REPLY": "Error: FloodWaitError, wait 120 seconds"}):
+            with self.assertRaises(channel.ChannelError):
+                asyncio.run(channel.publish("c", [Path("/m/a.jpg")]))
+        self.assertGreater(asyncio.run(channel.status()), 3000)
 
 
 class BreakingTest(unittest.TestCase):

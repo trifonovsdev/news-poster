@@ -148,9 +148,39 @@ def page_image(url: str) -> str | None:
     return None
 
 
+def _dhash(path: Path) -> int:
+    """64-bit difference hash: the same picture at another size or quality hashes close."""
+    with Image.open(path) as image:
+        pixels = image.convert("L").resize((9, 8)).tobytes()
+    bits = 0
+    for row in range(8):
+        for col in range(8):
+            bits = bits << 1 | (pixels[row * 9 + col] > pixels[row * 9 + col + 1])
+    return bits
+
+
+def unique(files: list[Path], distance: int = 6) -> list[Path]:
+    """Drops repeats of one picture (an article's <img> is often its og:image too),
+    keeping the largest copy in the place of the first."""
+    kept: list[tuple[int, Path]] = []
+    for path in files:
+        try:
+            h = _dhash(path)
+        except Exception:
+            continue
+        for n, (other, copy) in enumerate(kept):
+            if bin(h ^ other).count("1") <= distance:
+                if path.stat().st_size > copy.stat().st_size:
+                    kept[n] = (other, path)
+                break
+        else:
+            kept.append((h, path))
+    return [path for _, path in kept]
+
+
 def collect(candidates: list[dict], sources: list[str], stamp: str, log) -> list[Path]:
     """The first video that downloads, alone; otherwise every photo that passes,
-    plus the source pages' own images, for the model to look at and choose."""
+    plus the source pages' own images, without repeats, for the model to choose from."""
     files: list[Path] = []
     for n, item in enumerate(candidates):
         dest = config.MEDIA / f"{stamp}-{n}"
@@ -169,7 +199,7 @@ def collect(candidates: list[dict], sources: list[str], stamp: str, log) -> list
                 files.append(photo(image, config.MEDIA / f"{stamp}-og{n}"))
             except Exception as e:
                 log.info("og image skipped %s: %s", image[:120], e)
-    return files
+    return unique(files)
 
 
 def update_ytdlp() -> None:

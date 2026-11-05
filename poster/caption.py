@@ -4,7 +4,7 @@ import html
 import re
 from html.parser import HTMLParser
 
-from poster import config
+from poster import config, emoji
 
 INLINE_TAGS = {"b", "i", "u", "s", "code"}
 
@@ -58,13 +58,15 @@ def visible_length(markup: str) -> int:
 
 
 def render(story: dict) -> str:
-    emoji = story.get("emoji", "").strip()
-    # The headline is bold as a whole; tags inside it are dropped.
-    headline = html.escape(re.sub(r"<[^>]+>", "", story["headline"]).strip(), quote=False)
-    parts = [f"{emoji} <b>{headline}</b>".strip()]
+    lead = story.get("emoji", "").strip()
+    # Not bold as a whole: the model bolds the hook (the CAPS word, the name), as
+    # @technomotel does, so the eye lands on it rather than on a grey bold block.
+    # Premium emoji only where the model picked them by their animation: the
+    # headline's lead and the kicker. In the body 🚫 would turn into a duck.
+    parts = [emoji.premium(f"{lead} {clean(story['headline'])}".strip())]
     parts += [clean(p) for p in story["paragraphs"] if p.strip()]
     if story.get("kicker", "").strip():
-        parts.append(clean(story["kicker"]))
+        parts.append(emoji.premium(clean(story["kicker"])))
     parts.append(config.FOOTER)
     return "\n\n".join(parts)
 
